@@ -1,0 +1,13 @@
+/.build/
+/.bundle/
+/.yardoc
+/_yardoc/
+/build/*
+!/build/.gitkeep
+/coverage/
+/doc/
+/pkg/
+/rubies/*
+!/rubies/.gitkeep
+/spec/reports/
+/tmp/

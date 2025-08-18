@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset= "utf-8" />
+    <title>DXRuby.wasm Example</title>
+    <script type="module" src="./dist/load_ruby_script.js"></script>
+    <script type="text/ruby" data-eval="sync">
+      require "dxruby_wasm"
+      version = DXRubyWasm::VERSION
+      JS.global[:document].getElementById("dxruby-out")[:innerText] = "DXRubyWasm ver.#{version}"
+
+      rect = Image.new(30, 30, C_GREEN)
+      x = 0
+      y = Window.height / 2
+      speed = 3
+
+      Window.loop do
+        Window.draw(x, y, rect)
+        x += speed
+        x = 0 if x > Window.width
+      end
+    </script>
+  </head>
+
+  <body>
+    <div id="dxruby-out"></div>
+    <canvas id="dxruby-canvas"></canvas>
+  </body>
+</html>

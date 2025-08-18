@@ -1,0 +1,39 @@
+PATH
+  remote: dxruby_wasm
+  specs:
+    dxruby_wasm (0.1.0)
+      js
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    js (2.7.1)
+    logger (1.7.0)
+    ostruct (0.6.3)
+    rake (13.3.0)
+    ruby_wasm (2.7.1)
+    ruby_wasm (2.7.1-aarch64-linux)
+    ruby_wasm (2.7.1-aarch64-linux-musl)
+    ruby_wasm (2.7.1-arm64-darwin)
+    ruby_wasm (2.7.1-x86_64-darwin)
+    ruby_wasm (2.7.1-x86_64-linux)
+    ruby_wasm (2.7.1-x86_64-linux-musl)
+
+PLATFORMS
+  aarch64-linux
+  aarch64-linux-musl
+  arm64-darwin
+  x86_64-darwin
+  x86_64-linux
+  x86_64-linux-musl
+
+DEPENDENCIES
+  dxruby_wasm (= 0.1.0)!
+  js
+  logger
+  ostruct
+  rake (~> 13.0)
+  ruby_wasm
+
+BUNDLED WITH
+   2.6.9
