@@ -1,8 +1,23 @@
 # frozen_string_literal: true
 
+require "base64"
+
 module DXRubyWasm
   class Image
     attr_reader :canvas, :width, :height
+
+    FILE_HEADERS = {
+      png: "\x89PNG\r\n\x1A\n".b,
+      jpeg: "\xFF\xD8\xFF".b,
+      bmp: "BM".b,
+    }
+    private_constant :FILE_HEADERS
+    MIME_TYPES = {
+      png: "image/png",
+      jpeg: "image/jpeg",
+      bmp: "image/bmp",
+    }
+    private_constant :MIME_TYPES
 
     def self.load(path_or_url)
       new(1, 1).load(path_or_url)
@@ -18,8 +33,13 @@ module DXRubyWasm
 
     def load(path_or_url)
       img = JS.global[:Image].new(1, 1)
-      # TODO: load from wasi file system
-      img[:src] = path_or_url
+      if File.exist?(path_or_url)
+        # load from wasi file system
+        img[:src] = base64_image_data(path_or_url)
+      else
+        # load from remote
+        img[:src] = path_or_url
+      end
 
       img.decode.then {
         img[:width] = img[:naturalWidth]
@@ -28,7 +48,8 @@ module DXRubyWasm
         resize(img[:naturalWidth], img[:naturalHeight])
         @ctx.drawImage(img, 0, 0)
       }.catch { |e|
-        raise DXRubyWasm::Error, "Failed to load image: #{path_or_url}"
+        raise DXRubyWasm::Error,
+              "Failed to load image. path: #{path_or_url}, message: #{e[:message]}"
       }
       self
     end
@@ -47,6 +68,23 @@ module DXRubyWasm
     end
 
     private
+
+    def base64_image_data(file_path)
+      file_content = File.open(file_path, "rb").read
+      header = file_content[0, 8]
+      mime_type = nil
+      FILE_HEADERS.each do |type, h|
+        if header.start_with?(h)
+          mime_type = MIME_TYPES[type]
+          break
+        end
+      end
+      return "data:#{mime_type};base64,#{Base64.encode64(file_content)}" if mime_type
+
+      raise DXRubyWasm::Error, "Only PNG, JPEG, and BMP files are supported."
+    rescue => e
+      raise DXRubyWasm::Error, e.message
+    end
 
     def resize(w, h)
       @width, @height = w, h
