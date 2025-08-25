@@ -41,16 +41,20 @@ module DXRubyWasm
         img[:src] = path_or_url
       end
 
-      img.decode.then {
-        img[:width] = img[:naturalWidth]
-        img[:height] = img[:naturalHeight]
-        # TODO: update img.style.width, img.style.height here ?
-        resize(img[:naturalWidth], img[:naturalHeight])
-        @ctx.drawImage(img, 0, 0)
-      }.catch { |e|
-        raise DXRubyWasm::Error,
-              "Failed to load image. path: #{path_or_url}, message: #{e[:message]}"
-      }
+      begin
+        img.decode.await
+      rescue => e
+        msg = "Failed to load image. path: #{path_or_url}"
+        msg += "message: #{e.message}" unless e.message.to_s.empty?
+        raise DXRubyWasm::Error, msg
+      end
+
+      img[:width] = img[:naturalWidth].to_i
+      img[:height] = img[:naturalHeight].to_i
+      # TODO: update img.style.width, img.style.height here ?
+      resize(img[:naturalWidth].to_i, img[:naturalHeight].to_i)
+      @ctx.drawImage(img, 0, 0)
+
       self
     end
 
