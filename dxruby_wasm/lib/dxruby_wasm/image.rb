@@ -4,7 +4,7 @@ require "base64"
 
 module DXRubyWasm
   class Image
-    attr_reader :canvas, :width, :height
+    attr_reader :canvas, :ctx, :width, :height
 
     FILE_HEADERS = {
       png: "\x89PNG\r\n\x1A\n".b,
@@ -21,6 +21,25 @@ module DXRubyWasm
 
     def self.load(path_or_url)
       new(1, 1).load(path_or_url)
+    end
+
+    def self.load_tiles(path_or_url, xcount, ycount)
+      orig_image = load(path_or_url)
+      w = orig_image.width / xcount
+      h = orig_image.height / ycount
+
+      res = []
+
+      ycount.times do |iy|
+        xcount.times do |ix|
+          image_data = orig_image.ctx.getImageData(w * ix, h * iy, w, h)
+          new_image = new(w, h)
+          new_image.ctx.putImageData(image_data, 0, 0)
+          res << new_image
+        end
+      end
+
+      res
     end
 
     def initialize(width, height, color = C_DEFAULT, canvas: nil)
