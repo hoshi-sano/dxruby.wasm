@@ -6,6 +6,10 @@ module DXRubyWasm
   class Image
     attr_reader :canvas, :ctx, :width, :height
 
+    BLEND_TYPES = {
+      alpha: "source-over",
+      add:   "lighter",
+    }
     FILE_HEADERS = {
       png: "\x89PNG\r\n\x1A\n".b,
       jpeg: "\xFF\xD8\xFF".b,
@@ -79,6 +83,30 @@ module DXRubyWasm
 
     def draw(x, y, image)
       @ctx.drawImage(image.canvas, x, y)
+      self
+    end
+
+    def draw_ex(x, y, image, options = {})
+      scale_x = options[:scale_x] || 1
+      scale_y = options[:scale_y] || 1
+      center_x = options[:center_x] || image.width / 2
+      center_y = options[:center_y] || image.height / 2
+      alpha = options[:alpha] || 255
+      blend = options[:blend] || :alpha
+      angle = options[:angle] || 0
+
+      cx = x + center_x
+      cy = y + center_y
+
+      @ctx.translate(cx, cy)
+      @ctx.rotate(angle * Math::PI / 180.0)
+      @ctx.scale(scale_x, scale_y)
+      @ctx.save()
+      @ctx[:globalAlpha] = alpha / 255
+      @ctx[:globalCompositeOperation] = BLEND_TYPES[blend]
+      @ctx.drawImage(image.canvas, x - cx, y - cy)
+      @ctx.restore()
+      @ctx.setTransform(1, 0, 0, 1, 0, 0)
       self
     end
 

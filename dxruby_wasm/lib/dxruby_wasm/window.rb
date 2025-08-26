@@ -16,9 +16,17 @@ module DXRubyWasm
       JS.global[:window].requestAnimationFrame { |time| _loop(time) }
     end
 
-    def self.draw(x, y, image, z=0)
-      # TODO: wrap enqueue process
-      @@draw_queue.push([z, @@draw_queue.length, :image, x, y, image])
+    def self.draw(x, y, image, z = 0)
+      enqueue_draw(z, :image, x, y, image)
+    end
+
+    def self.draw_ex(x, y, image, options = {})
+      z = options[:z] || 0
+      enqueue_draw(z, :draw_ex, x, y, image, options)
+    end
+
+    def self.enqueue_draw(z, *args)
+      @@draw_queue.push([z, @@draw_queue.length, *args])
     end
 
     def self.width
@@ -81,13 +89,19 @@ module DXRubyWasm
     end
 
     def self._drain_draw_queue
-      # TODO: sort by z
-      @@draw_queue.each do |item|
+      @@draw_queue.sort { |a, b|
+        if a[0] == b[0]
+          a[1] <=> b[1] # sort by queued order
+        else
+          a[0] <=> b[0] # sort by z
+        end
+      }.each { |item|
         args = item[3..]
         case item[2]
         when :image then @@root_canvas_image.draw(*args)
+        when :draw_ex then @@root_canvas_image.draw_ex(*args)
         end
-      end
+      }
     end
   end
 end

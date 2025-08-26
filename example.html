@@ -11,19 +11,19 @@
       JS.global[:document].getElementById("dxruby-out")[:innerText] = "DXRubyWasm ver.#{version}"
 
       rect = Image.new(30, 30, C_GREEN)
+      sp = Sprite.new(0, 0, rect)
       logo = Image.load("logo.png")
 
-      rect_x, rect_y = 0, 0
       logo_y = 0
       speed = 2
 
       Window.loop do
-        rect_x += Input.x * speed
-        rect_y += Input.y * speed
+        sp.x += Input.x * speed
+        sp.y += Input.y * speed
         logo_y += speed
         logo_y = 0 if logo_y > Window.height
 
-        Window.draw(rect_x, rect_y, rect)
+        Sprite.draw([sp])
         Window.draw(0, logo_y, logo)
       end
     </script>
