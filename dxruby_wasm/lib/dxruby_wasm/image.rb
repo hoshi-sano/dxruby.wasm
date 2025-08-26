@@ -82,10 +82,70 @@ module DXRubyWasm
       self
     end
 
+    def line(x1, y1, x2, y2, color)
+      @ctx.beginPath()
+      @ctx[:strokeStyle] = to_css_color_string(color)
+      @ctx.moveTo(x1, y1)
+      @ctx.lineTo(x2, y2)
+      @ctx.stroke()
+      @ctx.closePath()
+      self
+    end
+
+    def box(x1, y1, x2, y2, color)
+      @ctx.beginPath()
+      @ctx[:strokeStyle] = to_css_color_string(color)
+      @ctx.rect(x1, y1, x2-x1, y2-y1)
+      @ctx.stroke()
+      @ctx.closePath()
+      self
+    end
+
     def box_fill(x1, y1, x2, y2, color)
       @ctx.beginPath()
       @ctx[:fillStyle] = to_css_color_string(color)
       @ctx.fillRect(x1, y1, x2-x1, y2-y1)
+      @ctx.closePath()
+      self
+    end
+
+    def circle(x, y, r, color)
+      @ctx.beginPath()
+      @ctx[:strokeStyle] = to_css_color_string(color)
+      @ctx.arc(x, y, r, 0, Math::PI * 2, false)
+      @ctx.stroke()
+      @ctx.closePath()
+      self
+    end
+
+    def circle_fill(x, y, r, color)
+      @ctx.beginPath()
+      @ctx[:fillStyle] = to_css_color_string(color)
+      @ctx.arc(x, y, r, 0, Math::PI * 2, false)
+      @ctx.fill()
+      @ctx.closePath()
+      self
+    end
+
+    def triangle(x1, y1, x2, y2, x3, y3, color)
+      @ctx.beginPath()
+      @ctx[:strokeStyle] = to_css_color_string(color)
+      @ctx.moveTo(x1, y1)
+      @ctx.lineTo(x2, y2)
+      @ctx.lineTo(x3, y3)
+      @ctx.lineTo(x1, y1)
+      @ctx.stroke()
+      @ctx.closePath()
+      self
+    end
+
+    def triangle_fill(x1, y1, x2, y2, x3, y3, color)
+      @ctx.beginPath()
+      @ctx[:fillStyle] = to_css_color_string(color)
+      @ctx.moveTo(x1, y1)
+      @ctx.lineTo(x2, y2)
+      @ctx.lineTo(x3, y3)
+      @ctx.fill()
       @ctx.closePath()
       self
     end
