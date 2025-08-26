@@ -150,6 +150,14 @@ module DXRubyWasm
       self
     end
 
+    def fill(color)
+      box_fill(0, 0, @width, @height, color)
+    end
+
+    def clear
+      fill([0, 0, 0, 0])
+    end
+
     private
 
     def base64_image_data(file_path)
