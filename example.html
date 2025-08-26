@@ -13,15 +13,18 @@
       rect = Image.new(30, 30, C_GREEN)
       logo = Image.load("logo.png")
 
-      y = 0
+      rect_x, rect_y = 0, 0
+      logo_y = 0
       speed = 2
 
       Window.loop do
-        Window.draw(0, y, rect)
-        Window.draw(35, y, logo)
+        rect_x += Input.x * speed
+        rect_y += Input.y * speed
+        logo_y += speed
+        logo_y = 0 if logo_y > Window.height
 
-        y += speed
-        y = 0 if y > Window.height
+        Window.draw(rect_x, rect_y, rect)
+        Window.draw(0, logo_y, logo)
       end
     </script>
   </head>

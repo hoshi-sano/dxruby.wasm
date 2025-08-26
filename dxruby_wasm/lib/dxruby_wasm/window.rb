@@ -58,6 +58,8 @@ module DXRubyWasm
     def self._loop(timestamp)
       @@root_canvas_image ||= _init
 
+      Input._on_tick
+
       @@draw_queue = []
 
       @@block.call
@@ -74,7 +76,7 @@ module DXRubyWasm
       self.width = @@width
       self.height = @@height
       img = Image.new(self.width, self.height, canvas: canvas)
-      # TODO: initialize Input
+      Input._init(canvas)
       img
     end
 
