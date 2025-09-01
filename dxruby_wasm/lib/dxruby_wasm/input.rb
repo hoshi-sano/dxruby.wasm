@@ -48,11 +48,11 @@ module DXRubyWasm
     end
 
     def self.key_push?(code)
-      @@pressing_keys[code] == @tick - 1
+      @@pressing_keys[code] == @@tick - 1
     end
 
     def self.key_release?(code)
-      @@pressing_keys[code] == -(@tick - 1)
+      @@pressing_keys[code] == -(@@tick - 1)
     end
 
     def self.keys
