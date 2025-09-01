@@ -1,0 +1,4 @@
+theme: jekyll-theme-minimal
+logo: https://raw.githubusercontent.com/hoshi-sano/dxruby.wasm/refs/heads/main/logo.png
+plugins:
+  - jekyll-seo-tag

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset= "utf-8" />
+    <title>DXRuby.wasm Example</title>
+    <script type="module" src="https://pub-a7d0f5fabfb8427eb10cedaf22dcf8aa.r2.dev/load_dxruby_wasm.js"></script>
+    <script type="text/ruby" data-eval="async">
+      require "dxruby_wasm"
+
+      version = DXRubyWasm::VERSION
+      JS.global[:document].getElementById("dxruby-out")[:innerText] = "DXRubyWasm ver.#{version}"
+
+      class Checker < Sprite
+        def initialize(x, y)
+          @image_and_colliders = [
+            [Image.new(30, 30, C_DEFAULT).circle_fill(15, 15, 1, C_GREEN), [15, 15]],
+            [Image.new(30, 30, C_DEFAULT).circle_fill(15, 15, 15, C_GREEN), [15, 15, 15]],
+            [Image.new(30, 30, C_DEFAULT).box_fill(0, 0, 30, 30, C_GREEN), [0, 0, 30, 30]],
+            [
+              Image.new(30, 30, C_DEFAULT).triangle_fill(15, 0, 30, 30, 0, 30, C_GREEN),
+              [15, 0, 30, 30, 0, 30],
+            ],
+          ]
+          @image_change_idx = 0
+          super(x, y, @image_and_colliders[@image_change_idx][0])
+          self.collision = @image_and_colliders[@image_change_idx][1]
+        end
+
+        def update
+          if Input.key_push?(K_C)
+            @image_change_idx += 1
+            @image_change_idx = @image_change_idx % @image_and_colliders.size
+            self.image = @image_and_colliders[@image_change_idx][0]
+            self.collision = @image_and_colliders[@image_change_idx][1]
+          end
+        end
+      end
+
+      class HitObject < Sprite
+        def initialize(x, y, image, hit_image)
+          super(x, y, image)
+          @orig_image = image
+          @hit_image = hit_image
+          @hit_count = 0
+          @prev_hit_count = 0
+        end
+
+        def update
+          if (@hit_count - @prev_hit_count).zero?
+            self.image = @orig_image if @hit_count > 0
+            @hit_count = 0
+            @prev_hit_count = 0
+          elsif @prev_hit_count.zero?
+            self.image = @hit_image
+          end
+          @prev_hit_count = @hit_count
+        end
+
+        def hit(ohter)
+          @hit_count += 1
+        end
+      end
+
+      checker = Checker.new(0, 0)
+      obj1 = HitObject.new(150, 100, Image.new(100, 100, C_WHITE), Image.new(100, 100, C_RED))
+      obj2 = HitObject.new(260, 100,
+                           Image.new(100, 100).triangle_fill(50, 0, 100, 100, 0, 100, C_WHITE),
+                           Image.new(100, 100).triangle_fill(50, 0, 100, 100, 0, 100, C_RED))
+      obj2.collision = [50, 0, 100, 100, 0, 100]
+      obj3 = HitObject.new(370, 100,
+                           Image.new(100, 100).circle_fill(50, 50, 50, C_WHITE),
+                           Image.new(100, 100).circle_fill(50, 50, 50, C_RED))
+      obj3.collision = [50, 50, 50]
+
+      Window.loop do
+        checker.x += Input.x
+        checker.y += Input.y
+
+        Sprite.check(checker, [obj1, obj2, obj3])
+        Sprite.update([checker, obj1, obj2, obj3])
+        Sprite.draw([checker, obj1, obj2, obj3])
+      end
+    </script>
+  </head>
+
+  <body>
+    <div id="dxruby-out">LOADING...</div>
+    <canvas id="dxruby-canvas"></canvas>
+  </body>
+</html>

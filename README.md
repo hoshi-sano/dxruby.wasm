@@ -5,6 +5,8 @@ providing an API similar to [DXRuby](https://mirichi.github.io/dxruby-doc/).
 
 ## Demo
 
+https://hoshi-sano.github.io/dxruby.wasm/index.html#demo
+
 ## Usage
 
 ## Development
