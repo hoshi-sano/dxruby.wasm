@@ -1,7 +1,12 @@
 # frozen_string_literal: true
 
+require_relative "./sprite/collision"
+
 module DXRubyWasm
   class Sprite
+    extend DXRubyWasm::Sprite::Collision::ClassMethods
+    include DXRubyWasm::Sprite::Collision
+
     attr_accessor :x
     attr_accessor :y
     attr_reader :image
@@ -15,14 +20,7 @@ module DXRubyWasm
     attr_accessor :blend
     attr_accessor :shader
     attr_accessor :target
-    attr_accessor :collision
-    attr_accessor :collision_enable
-    attr_accessor :collision_sync
     attr_accessor :visible
-
-    # TODO:
-    # def check(o_sprites, d_sprites, shot = :shot, hit = :hit)
-    # end
 
     def self.update(sprites)
       sprites.each do |sprite|
@@ -51,6 +49,7 @@ module DXRubyWasm
       @z = 0
       @collision_enable = true
       @collision_sync = true
+      self.collision = [0, 0, image.width, image.height] if image
       @visible = true
       @vanished = false
 
@@ -77,6 +76,14 @@ module DXRubyWasm
     def image=(img)
       @image = img
       calc_center
+    end
+
+    def absolute_x
+      @x + (@target&.x || 0)
+    end
+
+    def absolute_y
+      @y + (@target&.y || 0)
     end
 
     private
