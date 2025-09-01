@@ -46,6 +46,12 @@ module DXRubyWasm
       res
     end
 
+    def dup
+      res = self.class.new(@width, @height)
+      res.ctx.putImageData(@ctx.getImageData(0, 0, @width, @height), 0, 0)
+      res
+    end
+
     def initialize(width, height, color = C_DEFAULT, canvas: nil)
       @width, @height = width, height
       @canvas = canvas || JS.global[:document].createElement("canvas")
