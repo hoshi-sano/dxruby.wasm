@@ -192,6 +192,20 @@ module DXRubyWasm
       fill([0, 0, 0, 0])
     end
 
+    def draw_font(x, y, text, font, color = [255, 255, 255])
+      draw_font_ex(x, y, text, font, { color: color })
+      self
+    end
+
+    def draw_font_ex(x, y, text, font, option = {})
+      @ctx[:font] = font.to_css_font_string
+      @ctx[:textBaseline] = "top"
+      @ctx[:fillStyle] = to_css_color_string(option[:color] || [255, 255, 255])
+      # TODO: Use other options besides :color
+      @ctx.fillText(text, x, y)
+      self
+    end
+
     private
 
     def base64_image_data(file_path)

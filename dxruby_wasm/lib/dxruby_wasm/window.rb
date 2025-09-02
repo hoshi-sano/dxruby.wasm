@@ -25,6 +25,11 @@ module DXRubyWasm
       enqueue_draw(z, :draw_ex, x, y, image, options)
     end
 
+    def self.draw_font(x, y, text, font, options = {})
+      z = options[:z] || 0
+      enqueue_draw(z, :font, x, y, text, font, options)
+    end
+
     def self.enqueue_draw(z, *args)
       @@draw_queue.push([z, @@draw_queue.length, *args])
     end
@@ -100,6 +105,7 @@ module DXRubyWasm
         case item[2]
         when :image then @@root_canvas_image.draw(*args)
         when :draw_ex then @@root_canvas_image.draw_ex(*args)
+        when :font then @@root_canvas_image.draw_font_ex(*args)
         end
       }
     end

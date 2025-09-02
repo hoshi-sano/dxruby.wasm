@@ -72,6 +72,11 @@
                            Image.new(100, 100).circle_fill(50, 50, 50, C_RED))
       obj3.collision = [50, 50, 50]
 
+      texts = [
+        "Arrow keys: Move",
+        "C keys: Change object shape",
+      ]
+
       Window.loop do
         checker.x += Input.x
         checker.y += Input.y
@@ -79,6 +84,10 @@
         Sprite.check(checker, [obj1, obj2, obj3])
         Sprite.update([checker, obj1, obj2, obj3])
         Sprite.draw([checker, obj1, obj2, obj3])
+
+        texts.each_with_index do |text, idx|
+          Window.draw_font(50, 300 + idx * 30, text, Font.default, color: C_WHITE)
+        end
       end
     </script>
   </head>
