@@ -74,7 +74,7 @@ module DXRubyWasm
         img.decode.await
       rescue => e
         msg = "Failed to load image. path: #{path_or_url}"
-        msg += "message: #{e.message}" unless e.message.to_s.empty?
+        msg += ", message: #{e.message}" unless e.message.to_s.empty?
         raise DXRubyWasm::Error, msg
       end
 
