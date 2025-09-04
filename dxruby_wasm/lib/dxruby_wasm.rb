@@ -8,6 +8,8 @@ require_relative "dxruby_wasm/image"
 require_relative "dxruby_wasm/sprite"
 require_relative "dxruby_wasm/font"
 require_relative "dxruby_wasm/input"
+require_relative "dxruby_wasm/render_methods"
+require_relative "dxruby_wasm/render_target"
 require_relative "dxruby_wasm/window"
 require_relative "dxruby_wasm/version"
 

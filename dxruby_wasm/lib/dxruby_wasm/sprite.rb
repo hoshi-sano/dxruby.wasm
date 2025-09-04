@@ -59,10 +59,10 @@ module DXRubyWasm
     def draw
       return if !@visible || vanished?
 
-      Window.draw_ex(@x, @y, @image,
-                     scale_x: @scale_x, scale_y: @scale_y,
-                     alpha: @alpha, blend: @blend,
-                     angle: @angle, center_x: @center_x, center_y: @center_y)
+      (@target || Window).draw_ex(@x, @y, @image,
+                                  scale_x: @scale_x, scale_y: @scale_y,
+                                  alpha: @alpha, blend: @blend,
+                                  angle: @angle, center_x: @center_x, center_y: @center_y)
     end
 
     def vanish

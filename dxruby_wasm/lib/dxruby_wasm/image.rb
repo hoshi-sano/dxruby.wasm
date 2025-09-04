@@ -88,11 +88,13 @@ module DXRubyWasm
     end
 
     def draw(x, y, image)
+      image.update if image.is_a?(RenderTarget)
       @ctx.drawImage(image.canvas, x, y)
       self
     end
 
     def draw_ex(x, y, image, options = {})
+      image.update if image.is_a?(RenderTarget)
       scale_x = options[:scale_x] || 1
       scale_y = options[:scale_y] || 1
       center_x = options[:center_x] || image.width / 2
@@ -189,7 +191,7 @@ module DXRubyWasm
     end
 
     def clear
-      fill([0, 0, 0, 0])
+      @ctx.clearRect(0, 0, @width, @height)
     end
 
     def draw_font(x, y, text, font, color = [255, 255, 255])
