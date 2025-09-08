@@ -47,6 +47,9 @@ module DXRubyWasm
       @image = image
 
       @z = 0
+      @angle = 0
+      @scale_x = 1.0
+      @scale_y = 1.0
       @collision_enable = true
       @collision_sync = true
       self.collision = [0, 0, image.width, image.height] if image
@@ -75,7 +78,8 @@ module DXRubyWasm
 
     def image=(img)
       @image = img
-      calc_center
+      self.collision = [0, 0, img.width, img.height] if @collision.nil?
+      calc_center if @center_x.nil?
     end
 
     def absolute_x

@@ -58,6 +58,47 @@ module DXRubyWasm
             dx, dy = vector_subtract(a, b)
             dx * dx + dy * dy
           end
+
+          def transformed(poss)
+            origin_x = @sprite.absolute_x
+            origin_y = @sprite.absolute_y
+
+            unless @sprite.collision_sync
+              return poss.map { |(x, y)|  [origin_x + x, origin_y + y] }
+            end
+
+            cx = @sprite.center_x
+            cy = @sprite.center_y
+            sx = @sprite.scale_x
+            sy = @sprite.scale_y
+            rad = @sprite.angle * Math::PI / 180.0
+            cos = Math.cos(rad)
+            sin = Math.sin(rad)
+
+            poss.map do |(x, y)|
+              # # Translate to origin relative to the center
+              # dx = x - cx
+              # dy = y - cy
+              #
+              # # Apply scaling
+              # dx *= sx
+              # dy *= sy
+              #
+              # # Apply rotation
+              # rotated_x = dx * cos - dy * sin
+              # rotated_y = dx * sin + dy * cos
+              #
+              # # Translate back from center and apply @sprite's position
+              # [rotated_x + cx + origin_x, rotated_y + cy + origin_y]
+              #
+              #
+              # The above operations are combined in the following:
+              [
+                (x - cx) * sx * cos - (y - cy) * sy * sin + cx + origin_x,
+                (x - cx) * sx * sin + (y - cy) * sy * cos + cy + origin_y,
+              ]
+            end
+          end
         end
 
         class Point < Base
@@ -71,14 +112,18 @@ module DXRubyWasm
             when Point
               absolute_pos == other.absolute_pos
             when Circle
-              in_circle?(other.absolute_pos, other.r)
+              if other.ellipse?
+                in_polygon?(other.transformed_circle)
+              else
+                in_circle?(other.absolute_pos, other.r)
+              end
             when Rect, Triangle
               in_polygon?(other.absolute_poss)
             end
           end
 
           def absolute_pos
-            [@sprite.absolute_x + @x, @sprite.absolute_y + @y]
+            transformed([[@x, @y]]).first
           end
 
           # Point-in-polygon collision detection using the Ray Casting
@@ -123,6 +168,10 @@ module DXRubyWasm
             super()
           end
 
+          def ellipse?
+            @sprite.scale_x != @sprite.scale_y
+          end
+
           def absolute_pos
             [@sprite.absolute_x + @x, @sprite.absolute_y + @y]
           end
@@ -130,11 +179,24 @@ module DXRubyWasm
           def collide?(other)
             case other
             when Point
-              other.collides?(self)
+              other.collide?(self)
             when Circle
-              circles_collide?(absolute_pos, @r, other.absolute_pos, other.r)
+              case [self.ellipse?, other.ellipse?]
+              when [true, true]
+                polygons_collide?(transformed_circle, other.transformed_circle)
+              when [true, false]
+                polygon_circle_collide?(transformed_circle, other.absolute_pos, other.r)
+              when [false, true]
+                polygon_circle_collide?(other.transformed_circle, absolute_pos, @r)
+              when [false, false]
+                circles_collide?(absolute_pos, @r, other.absolute_pos, other.r)
+              end
             when Rect, Triangle
-              polygon_circle_collide?(other.absolute_poss, absolute_pos, @r)
+              if ellipse?
+                polygons_collide?(transformed_circle, other.absolute_poss)
+              else
+                polygon_circle_collide?(other.absolute_poss, absolute_pos, @r)
+              end
             end
           end
 
@@ -181,6 +243,18 @@ module DXRubyWasm
             radius_sum = radius1 + radius2
             dist_sq <= radius_sum * radius_sum
           end
+
+          # Approximate the circle as a polygon
+          def transformed_circle(segments = 16)
+            angle_step = 2 * Math::PI / segments
+            circle_poss = []
+            segments.times do |i|
+              rad = i * angle_step
+              circle_poss << [@x + Math.cos(rad) * r, @y + Math.sin(rad) * r]
+            end
+
+            transformed(circle_poss)
+          end
         end
 
         class Rect < Base
@@ -199,11 +273,7 @@ module DXRubyWasm
           end
 
           def absolute_poss
-            # TODO: Consider angle, scale, ... and so on
-            [[@x1 + @sprite.x, @y1 + @sprite.y],
-             [@x2 + @sprite.x, @y1 + @sprite.y],
-             [@x2 + @sprite.x, @y2 + @sprite.y],
-             [@x1 + @sprite.x, @y2 + @sprite.y]]
+            transformed([[@x1, @y1], [@x2, @y1], [@x2, @y2], [@x1, @y2]])
           end
         end
 
@@ -224,10 +294,7 @@ module DXRubyWasm
           end
 
           def absolute_poss
-            # TODO: Consider angle, scale, ... and so on
-            [[@poss[0][0] + @sprite.x, @poss[0][1] + @sprite.y],
-             [@poss[1][0] + @sprite.x, @poss[1][1] + @sprite.y],
-             [@poss[2][0] + @sprite.x, @poss[2][1] + @sprite.y]]
+            transformed(@poss)
           end
         end
       end
