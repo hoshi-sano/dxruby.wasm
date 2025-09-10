@@ -71,7 +71,7 @@ module DXRubyWasm
       end
 
       begin
-        img.decode.await
+        Fiber.new { img.decode.await }.transfer
       rescue => e
         msg = "Failed to load image. path: #{path_or_url}"
         msg += ", message: #{e.message}" unless e.message.to_s.empty?
@@ -83,7 +83,6 @@ module DXRubyWasm
       # TODO: update img.style.width, img.style.height here ?
       resize(img[:naturalWidth].to_i, img[:naturalHeight].to_i)
       @ctx.drawImage(img, 0, 0)
-
       self
     end
 
