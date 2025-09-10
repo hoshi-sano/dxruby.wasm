@@ -6,7 +6,7 @@ module DXRubyWasm
   module Input
     def self._init(canvas)
       @@tick = 0
-      @@pressing_keys = Hash.new(0)
+      @@pressing_keys = Hash.new(-1)
       _init_key_events(canvas)
     end
 
