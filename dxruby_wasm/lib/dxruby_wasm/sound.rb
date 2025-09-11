@@ -10,17 +10,25 @@ module DXRubyWasm
       @@audio_context ||= JS.global[:AudioContext].new
     end
 
-    def initialize(path)
-      @path = path
+    def initialize(path_or_url)
+      @path = path_or_url
       @buffer = nil
       @source = nil # To keep track of the current playing source node
 
       context = self.class.audio_context
 
       Fiber.new {
-        JS.global.fetch(path)
-          .then { |response| response.arrayBuffer() }
-          .then { |array_buffer| context.decodeAudioData(array_buffer) }
+        promise = if File.exist?(path_or_url)
+                    binary_string = File.binread(path_or_url)
+                    uint8_array = JS.global[:Uint8Array].new(binary_string.bytes.to_js)
+                    array_buffer = uint8_array[:buffer]
+                    context.decodeAudioData(array_buffer)
+                  else
+                    JS.global.fetch(path_or_url)
+                      .then { |response| response.arrayBuffer() }
+                      .then { |array_buffer| context.decodeAudioData(array_buffer) }
+                  end
+        promise
           .then { |audio_buffer| @buffer = audio_buffer; JS::Undefined }
           .await
       }.transfer
