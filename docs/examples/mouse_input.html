@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>DXRuby.wasm Mouse Example</title>
+    <script type="module" src="https://pub-a7d0f5fabfb8427eb10cedaf22dcf8aa.r2.dev/load_dxruby_wasm.js"></script>
+    <script type="text/ruby">
+      require "dxruby_wasm"
+
+      version = DXRubyWasm::VERSION
+      JS.global[:document].getElementById("dxruby-out")[:innerText] = "DXRubyWasm ver.#{version}"
+
+      triangle_img = Image.new(30, 30).triangle_fill(15, 0, 30, 30, 0, 30, C_WHITE)
+      triangle = Sprite.new(0, 0, triangle_img)
+
+      clicked_points = []
+
+      Window.loop do
+        triangle.x = Input.mouse_x
+        triangle.y = Input.mouse_y
+        triangle.angle = (triangle.angle + 1) % 360
+
+        if Input.mouse_push?(M_LBUTTON)
+          clicked_points << [Input.mouse_x, Input.mouse_y]
+        end
+
+        if Input.mouse_down?(M_RBUTTON)
+          Window.bgcolor = C_BLUE
+        else
+          Window.bgcolor = C_BLACK
+        end
+
+        Sprite.draw([triangle])
+
+        clicked_points.each do |x, y|
+          Window.draw_circle_fill(x, y, 10, C_YELLOW)
+        end
+
+        Window.draw_font(0, 0, "x: #{Input.mouse_x}, y: #{Input.mouse_y}", Font.default)
+      end
+    </script>
+  </head>
+
+  <body>
+    <div id="dxruby-out">LOADING...</div>
+    <canvas id="dxruby-canvas"></canvas>
+  </body>
+</html>

@@ -4,6 +4,7 @@ require "js"
 
 require_relative "dxruby_wasm/constants/colors"
 require_relative "dxruby_wasm/constants/key_codes"
+require_relative "dxruby_wasm/constants/mouse_codes"
 require_relative "dxruby_wasm/image"
 require_relative "dxruby_wasm/sprite"
 require_relative "dxruby_wasm/sound"
@@ -17,6 +18,7 @@ require_relative "dxruby_wasm/version"
 module DXRubyWasm
   include DXRubyWasm::Constants::Colors
   include DXRubyWasm::Constants::KeyCodes
+  include DXRubyWasm::Constants::MouseCodes
 
   class Error < StandardError; end
 end
