@@ -13,11 +13,13 @@ module DXRubyWasm
 
       _init_key_events(canvas)
       _init_mouse_events(canvas)
+      _init_touch_events(canvas)
     end
 
     # Called on every frame from Window
     def self._on_tick
       @@tick += 1
+      _reset_cache
     end
 
     def self._init_key_events(canvas)
@@ -48,6 +50,32 @@ module DXRubyWasm
       canvas.addEventListener("contextmenu") do |event|
         event.preventDefault
       end
+    end
+
+    def self._init_touch_events(canvas)
+      canvas_id = canvas[:id]
+      JS.eval(<<~JAVASCRIPT)
+        window._touchPoints = [];
+
+        function updateTouchPoints(event) {
+          event.preventDefault();
+          const rect = canvas.getBoundingClientRect();
+          window._touchPoints = Array.from(event.touches).map(touch => {
+            return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+          });
+        }
+
+        canvas = document.getElementById("#{canvas_id}");
+
+        canvas.addEventListener('touchstart', updateTouchPoints, { passive: false });
+        canvas.addEventListener('touchmove', updateTouchPoints, { passive: false });
+        canvas.addEventListener('touchend', updateTouchPoints, { passive: false });
+        canvas.addEventListener('touchcancel', updateTouchPoints, { passive: false });
+
+        window.getTouchPoints = () => {
+          return window._touchPoints;
+        };
+      JAVASCRIPT
     end
 
     def self.x(_pad_number = 0)
@@ -98,6 +126,37 @@ module DXRubyWasm
 
     def self.mouse_release?(button)
       @@pressing_buttons[button] == -(@@tick - 1)
+    end
+
+    class Touch
+      attr_reader :x, :y
+
+      def initialize(x, y)
+        @x = x
+        @y = y
+      end
+    end
+
+    def self.touches
+      @touches ||= JS.global.getTouchPoints.to_a.map do |touch|
+        Touch.new(touch[:x].to_i, touch[:y].to_i)
+      end
+    end
+
+    def self.touch_count
+      touches.length
+    end
+
+    def self.touch_pos_x
+      touches.first&.x
+    end
+
+    def self.touch_pos_y
+      touches.first&.y
+    end
+
+    def self._reset_cache
+      @touches = nil
     end
   end
 end
