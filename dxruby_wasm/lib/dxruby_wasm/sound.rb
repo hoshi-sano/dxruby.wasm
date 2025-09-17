@@ -17,21 +17,19 @@ module DXRubyWasm
 
       context = self.class.audio_context
 
-      Fiber.new {
-        promise = if File.exist?(path_or_url)
-                    binary_string = File.binread(path_or_url)
-                    uint8_array = JS.global[:Uint8Array].new(binary_string.bytes.to_js)
-                    array_buffer = uint8_array[:buffer]
-                    context.decodeAudioData(array_buffer)
-                  else
-                    JS.global.fetch(path_or_url)
-                      .then { |response| response.arrayBuffer() }
-                      .then { |array_buffer| context.decodeAudioData(array_buffer) }
-                  end
-        promise
-          .then { |audio_buffer| @buffer = audio_buffer; JS::Undefined }
-          .await
-      }.transfer
+      promise = if File.exist?(path_or_url)
+                  binary_string = File.binread(path_or_url)
+                  uint8_array = JS.global[:Uint8Array].new(binary_string.bytes.to_js)
+                  array_buffer = uint8_array[:buffer]
+                  context.decodeAudioData(array_buffer)
+                else
+                  JS.global.fetch(path_or_url)
+                    .then { |response| response.arrayBuffer() }
+                    .then { |array_buffer| context.decodeAudioData(array_buffer) }
+                end
+      promise
+        .then { |audio_buffer| @buffer = audio_buffer; JS::Undefined }
+        .await
     end
 
     # Start playing the sound.

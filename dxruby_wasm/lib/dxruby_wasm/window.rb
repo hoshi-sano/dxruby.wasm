@@ -15,7 +15,8 @@ module DXRubyWasm
       already_running = !!@block
       @block = block
       return if already_running
-      JS.global[:window].requestAnimationFrame { |time| _loop(time) }
+
+      Fiber.new { _loop }.transfer
     end
 
     def self.width
@@ -44,20 +45,28 @@ module DXRubyWasm
       JS.global[:document].getElementById("dxruby-canvas")
     end
 
-    def self._loop(timestamp)
+    def self._loop
       @image ||= _init
 
-      Input._on_tick
+      while true
+        Input._on_tick
 
-      @draw_queue = []
+        @draw_queue = []
 
-      @block.call
+        @block.call
 
-      @image.box_fill(0, 0, @width, @height, @bgcolor)
-      drain_draw_queue
-      RenderTarget._late_tick_all
+        @image.box_fill(0, 0, @width, @height, @bgcolor)
+        drain_draw_queue
+        RenderTarget._late_tick_all
 
-      JS.global[:window].requestAnimationFrame { |time| _loop(time) }
+        _animation_frame_promise.await
+      end
+    end
+
+    def self._animation_frame_promise
+      JS.global[:Promise].new do |resolve|
+        JS.global[:window].requestAnimationFrame(resolve)
+      end
     end
 
     def self._init

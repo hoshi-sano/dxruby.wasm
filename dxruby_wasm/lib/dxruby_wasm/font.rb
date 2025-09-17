@@ -41,7 +41,7 @@ module DXRubyWasm
       font = JS.global[:FontFace].new(name, source)
 
       begin
-        Fiber.new { font.load.await }.transfer
+        font.load.await
       rescue => e
         msg = "Failed to load font. path: #{path_or_url}"
         msg += ", message: #{e.message}" unless e.message.to_s.empty?

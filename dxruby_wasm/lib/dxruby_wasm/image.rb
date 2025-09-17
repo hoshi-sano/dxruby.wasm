@@ -71,17 +71,23 @@ module DXRubyWasm
       end
 
       begin
-        Fiber.new { img.decode.await }.transfer
+        img.decode.await
       rescue => e
         msg = "Failed to load image. path: #{path_or_url}"
         msg += ", message: #{e.message}" unless e.message.to_s.empty?
         raise DXRubyWasm::Error, msg
       end
 
-      img[:width] = img[:naturalWidth].to_i
-      img[:height] = img[:naturalHeight].to_i
+      width = img[:naturalWidth].to_i
+      height = img[:naturalHeight].to_i
+      if width == 0 || height == 0
+        raise DXRubyWasm::Error, "Failed to decode image, or image size is 0. path: #{path_or_url}"
+      end
+
+      img[:width] = width
+      img[:height] = height
       # TODO: update img.style.width, img.style.height here ?
-      resize(img[:naturalWidth].to_i, img[:naturalHeight].to_i)
+      resize(width, height)
       @ctx.drawImage(img, 0, 0)
       self
     end
