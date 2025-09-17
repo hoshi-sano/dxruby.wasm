@@ -17,19 +17,14 @@
       logo_y = 0
       speed = 2
 
-      logo2 = nil
-      se = Sound.new("maou_se_8bit22.wav")
       Window.loop do
-        logo2 ||= Image.load("logo.png")
         sp.x += Input.x * speed
         sp.y += Input.y * speed
         logo_y += speed
         logo_y = 0 if logo_y > Window.height
-        se.play if se && logo_y.zero?
 
         Sprite.draw([sp])
         Window.draw(0, logo_y, logo)
-        Window.draw(0, Window.height-logo_y, logo2)
       end
     </script>
   </head>
