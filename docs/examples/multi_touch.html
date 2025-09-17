@@ -7,33 +7,20 @@
     <script type="text/ruby">
       require "dxruby_wasm"
 
-      version = DXRubyWasm::VERSION
-      JS.global[:document].getElementById("dxruby-out")[:innerText] = "DXRubyWasm ver.#{version} - Multi-touch Example"
-
-      triangle_img = Image.new(30, 30).triangle_fill(15, 0, 30, 30, 0, 30, C_WHITE)
-      triangle = Sprite.new(0, 0, triangle_img)
+      Window.width = nil
+      Window.height = nil
 
       Window.loop do
-        # Move the triangle to the first touch point, or off-screen if no touches
-        triangle.x = Input.touch_pos_x || -100
-        triangle.y = Input.touch_pos_y || -100
-        triangle.angle = (triangle.angle + 1) % 360
-
-        # Change background to blue if 2 or more fingers are touching
         if Input.touch_count >= 2
           Window.bgcolor = C_BLUE
         else
           Window.bgcolor = C_BLACK
         end
 
-        Sprite.draw([triangle])
-
-        # Draw a yellow circle at each touch point
         Input.touches.each do |touch|
           Window.draw_circle_fill(touch.x, touch.y, 20, C_YELLOW)
         end
 
-        # Display touch info
         info = "Touch Count: #{Input.touch_count}"
         if Input.touches.first
           info += ", x1: #{Input.touch_pos_x}, y1: #{Input.touch_pos_y}"
@@ -45,6 +32,6 @@
 
   <body>
     <div id="dxruby-out">LOADING...</div>
-    <canvas id="dxruby-canvas"></canvas>
+    <canvas id="dxruby-canvas" style="position: fixed; left: 0; top: 0;"></canvas>
   </body>
 </html>
