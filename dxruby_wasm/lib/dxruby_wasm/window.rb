@@ -23,7 +23,7 @@ module DXRubyWasm
     end
 
     def self.width=(w)
-      @width = w || JS.global[:window][:innerWidth]
+      @width = w || JS.global[:window][:innerWidth].to_i
       canvas = _root_canvas
       canvas[:width] = @width
       canvas[:style][:width] = @width
@@ -34,7 +34,7 @@ module DXRubyWasm
     end
 
     def self.height=(w)
-      @height = w || JS.global[:window][:innerHeight]
+      @height = w || JS.global[:window][:innerHeight].to_i
       canvas = _root_canvas
       canvas[:height] = @height
       canvas[:style][:height] = @height

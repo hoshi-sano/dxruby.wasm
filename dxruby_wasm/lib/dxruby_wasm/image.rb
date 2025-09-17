@@ -130,7 +130,7 @@ module DXRubyWasm
     def box(x1, y1, x2, y2, color)
       @ctx.beginPath()
       @ctx[:strokeStyle] = to_css_color_string(color)
-      @ctx.rect(x1, y1, x2-x1, y2-y1)
+      @ctx.rect(x1, y1, x2 - x1, y2 - y1)
       @ctx.stroke()
       @ctx.closePath()
       self
@@ -139,7 +139,7 @@ module DXRubyWasm
     def box_fill(x1, y1, x2, y2, color)
       @ctx.beginPath()
       @ctx[:fillStyle] = to_css_color_string(color)
-      @ctx.fillRect(x1, y1, x2-x1, y2-y1)
+      @ctx.fillRect(x1, y1, x2 - x1, y2 - y1)
       @ctx.closePath()
       self
     end
