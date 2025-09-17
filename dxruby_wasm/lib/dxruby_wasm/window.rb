@@ -9,6 +9,7 @@ module DXRubyWasm
     @block = nil
     @image = nil
     @bgcolor = Constants::Colors::C_BLACK
+    @fps = 60
 
     # Start main loop
     def self.loop(&block)
@@ -41,6 +42,14 @@ module DXRubyWasm
       canvas[:style][:height] = @height
     end
 
+    def self.fps
+      @fps
+    end
+
+    def self.fps=(fps)
+      @fps = fps
+    end
+
     def self._root_canvas
       JS.global[:document].getElementById("dxruby-canvas")
     end
@@ -48,24 +57,38 @@ module DXRubyWasm
     def self._loop
       @image ||= _init
 
+      interval = 1000.0 / @fps
+      last_time = 0.0
+
       while true
-        Input._on_tick
+        current_time = _animation_frame_promise.await.to_f
+        if last_time == 0.0
+          last_time = current_time
+        end
 
-        @draw_queue = []
+        delta = current_time - last_time
 
-        @block.call
+        if delta >= interval
+          last_time = current_time - (delta % interval)
 
-        @image.box_fill(0, 0, @width, @height, @bgcolor)
-        drain_draw_queue
-        RenderTarget._late_tick_all
+          Input._on_tick
 
-        _animation_frame_promise.await
+          @draw_queue = []
+
+          @block.call
+
+          @image.box_fill(0, 0, @width, @height, @bgcolor)
+          drain_draw_queue
+          RenderTarget._late_tick_all
+        end
       end
     end
 
     def self._animation_frame_promise
       JS.global[:Promise].new do |resolve|
-        JS.global[:window].requestAnimationFrame(resolve)
+        JS.global[:window].requestAnimationFrame do |timestamp|
+          resolve.apply(timestamp)
+        end
       end
     end
 
