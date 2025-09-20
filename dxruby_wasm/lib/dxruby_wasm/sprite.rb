@@ -24,6 +24,10 @@ module DXRubyWasm
 
     def self.update(sprites)
       sprites.each do |sprite|
+        if sprite.respond_to?(:each)
+          self.update(sprite)
+          next
+        end
         next if !sprite.respond_to?(:update)
         next if sprite.respond_to?(:vanished?) && sprite.vanished?
         sprite.update
@@ -31,7 +35,7 @@ module DXRubyWasm
     end
 
     def self.clean(sprites)
-      sprites.reject! { |sprite| sprite.nil? || sprite.vanished? }
+      sprites.flatten.reject! { |sprite| sprite.nil? || sprite.vanished? }
     end
 
     def self.draw(sprites)
