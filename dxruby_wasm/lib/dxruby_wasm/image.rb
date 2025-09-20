@@ -239,7 +239,12 @@ module DXRubyWasm
     end
 
     def to_css_color_string(color)
-      a, r, g, b = *color
+      if color.length == 3
+        r, g, b = *color
+        a = 255
+      else
+        a, r, g, b = *color
+      end
       "rgb(#{r} #{g} #{b} / #{a / 255.0})"
     end
   end
