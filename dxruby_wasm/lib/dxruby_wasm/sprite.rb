@@ -60,7 +60,7 @@ module DXRubyWasm
       @visible = true
       @vanished = false
 
-      calc_center
+      calc_center if @center_x.nil? || @center_y.nil?
     end
 
     def draw
