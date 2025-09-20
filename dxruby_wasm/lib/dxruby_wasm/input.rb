@@ -4,12 +4,14 @@ require "base64"
 
 module DXRubyWasm
   module Input
+    JS_FALSE = JS.eval("return false")
+
     def self._init(canvas)
       @@tick = 0
-      @@pressing_keys = Hash.new(-1)
+      @@pressing_keys = {}
       @@mouse_x = 0
       @@mouse_y = 0
-      @@pressing_buttons = Hash.new(-1)
+      @@pressing_buttons = {}
 
       _init_key_events(canvas)
       _init_mouse_events(canvas)
@@ -25,7 +27,7 @@ module DXRubyWasm
     def self._init_key_events(canvas)
       canvas.setAttribute("tabindex", 0)
       canvas.addEventListener("keydown") do |event|
-        @@pressing_keys[event[:code].to_s] = @@tick
+        @@pressing_keys[event[:code].to_s] = @@tick if event[:repeat] == JS_FALSE
         event.preventDefault
         event.stopPropagation
       end
@@ -93,7 +95,7 @@ module DXRubyWasm
     end
 
     def self.key_down?(code)
-      @@pressing_keys[code] > 0
+      (@@pressing_keys[code] || 0) > 0
     end
 
     def self.key_push?(code)
@@ -117,7 +119,7 @@ module DXRubyWasm
     end
 
     def self.mouse_down?(button)
-      @@pressing_buttons[button] > 0
+      (@@pressing_buttons[button] || 0) > 0
     end
 
     def self.mouse_push?(button)
