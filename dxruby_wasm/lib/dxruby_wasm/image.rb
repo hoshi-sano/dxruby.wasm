@@ -213,6 +213,15 @@ module DXRubyWasm
       self
     end
 
+    def [](x, y)
+      rgba = @ctx.getImageData(x, y, 1, 1)[:data]
+      [rgba[3].to_i, rgba[0].to_i, rgba[1].to_i, rgba[2].to_i]
+    end
+
+    def []=(x, y, color)
+      box_fill(x, y, x + 1, y + 1, color)
+    end
+
     private
 
     def base64_image_data(file_path)
