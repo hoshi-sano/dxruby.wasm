@@ -231,6 +231,12 @@ module DXRubyWasm
       box_fill(x, y, x + 1, y + 1, color)
     end
 
+    def change_hls(hue, luminance, saturation)
+      @ctx[:filter] = "hue-rotate(#{hue}deg) brightness(#{100 + luminance}%) saturate(#{100 + saturation}%)"
+      @ctx.drawImage(@canvas, 0, 0)
+      self
+    end
+
     private
 
     def base64_image_data(file_path)
