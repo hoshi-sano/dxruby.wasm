@@ -213,6 +213,15 @@ module DXRubyWasm
       self
     end
 
+    def copy_rect(x, y, image, x1 = 0, y1 = 0, width = nil, height = nil)
+      width ||= image.width
+      height ||= image.height
+
+      image_data = image.ctx.getImageData(x1, y1, width, height)
+      @ctx.putImageData(image_data, 0, 0)
+      self
+    end
+
     def [](x, y)
       rgba = @ctx.getImageData(x, y, 1, 1)[:data]
       [rgba[3].to_i, rgba[0].to_i, rgba[1].to_i, rgba[2].to_i]
