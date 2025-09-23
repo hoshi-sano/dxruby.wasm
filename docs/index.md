@@ -9,3 +9,4 @@ description: game development framework built on ruby.wasm
 * [Collision detection](./examples/collision.html)
 * [Mouse input](./examples/mouse_input.html)
 * [Multi touch](./examples/multi_touch.html)
+* [HLS filter](./examples/hls_filter.html)
