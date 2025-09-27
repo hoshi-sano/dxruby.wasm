@@ -316,10 +316,10 @@ module DXRubyWasm
               if o_sprite === d_sprite
                 res = true
                 discard = false
-                if o_sprite.respond_to?(shot) && shot
+                if shot && o_sprite.respond_to?(shot)
                   discard = (o_sprite.send(shot, d_sprite) == :discard)
                 end
-                if d_sprite.respond_to?(hit) && hit
+                if hit && d_sprite.respond_to?(hit)
                   discard = (d_sprite.send(hit, o_sprite) == :discard)
                 end
                 if discard
