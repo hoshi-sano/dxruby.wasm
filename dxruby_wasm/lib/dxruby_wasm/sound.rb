@@ -30,6 +30,31 @@ module DXRubyWasm
       promise
         .then { |audio_buffer| @buffer = audio_buffer; JS::Undefined }
         .await
+
+      @offset = 0
+      @loop_start = 0
+      @loop_end = 0
+      @loop_count = 1
+    end
+
+    def start=(v)
+      @offset = v
+      self
+    end
+
+    def loop_start=(v)
+      @loop_start = v
+      self
+    end
+
+    def loop_end=(v)
+      @loop_end = v
+      self
+    end
+
+    def loop_count=(v)
+      @loop_count = v
+      self
     end
 
     # Start playing the sound.
@@ -42,7 +67,25 @@ module DXRubyWasm
       @source = context.createBufferSource()
       @source[:buffer] = @buffer
       @source.connect(context[:destination])
-      @source.start(0)
+
+      if @loop_count == 1
+        @source.start(0, @offset)
+      else
+        @source[:loop] = true
+        @source[:loopStart] = @loop_start
+        @source[:loopEnd] = @loop_end if @loop_end > 0
+        if @loop_count == -1
+          @source.start(0, @offset)
+        else
+          duration = if @loop_end > 0
+                       @loop_end - @loop_start
+                     else
+                       @source[:buffer][:duration].to_f - @loop_start
+                     end
+          "duration * @loop_count: #{(duration * @loop_count).to_s}"
+          @source.start(0, @offset, duration * @loop_count)
+        end
+      end
     end
 
     # Stop playing the sound.
