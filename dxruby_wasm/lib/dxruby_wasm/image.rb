@@ -99,6 +99,8 @@ module DXRubyWasm
     end
 
     def draw_ex(x, y, image, options = {})
+      return draw(x, y, image) if options.empty?
+
       image.update if image.is_a?(RenderTarget)
       scale_x = options[:scale_x] || 1
       scale_y = options[:scale_y] || 1

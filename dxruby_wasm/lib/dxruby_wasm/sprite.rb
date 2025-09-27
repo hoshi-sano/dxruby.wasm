@@ -63,13 +63,27 @@ module DXRubyWasm
       calc_center if @center_x.nil? || @center_y.nil?
     end
 
+    def draw_options_exist?
+      !@angle.zero? &&
+        !(@scale_x == 1.0) &&
+        !(@scale_y == 1.0) &&
+        !(@alpha && @alpha == 255) &&
+        @blend &&
+        !(@center_x == (@image ? (@image.width / 2) : 0)) &&
+        !(@center_y == (@image ? (@image.height / 2) : 0))
+    end
+
     def draw
       return if !@visible || vanished?
 
-      (@target || Window).draw_ex(@x, @y, @image,
-                                  scale_x: @scale_x, scale_y: @scale_y,
-                                  alpha: @alpha, blend: @blend,
-                                  angle: @angle, center_x: @center_x, center_y: @center_y)
+      if draw_options_exist?
+        (@target || Window).draw_ex(@x, @y, @image,
+                                    scale_x: @scale_x, scale_y: @scale_y,
+                                    alpha: @alpha, blend: @blend,
+                                    angle: @angle, center_x: @center_x, center_y: @center_y)
+      else
+        (@target || Window).draw(@x, @y, @image)
+      end
     end
 
     def vanish
