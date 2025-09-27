@@ -43,6 +43,10 @@ module DXRubyWasm
       drain_draw_queue
     end
 
+    def to_image
+      @image.dup
+    end
+
     def _force_discard
       @draw_queue = []
     end
