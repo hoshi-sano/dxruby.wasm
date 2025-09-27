@@ -64,13 +64,13 @@ module DXRubyWasm
     end
 
     def draw_options_exist?
-      !@angle.zero? &&
-        !(@scale_x == 1.0) &&
-        !(@scale_y == 1.0) &&
-        !(@alpha && @alpha == 255) &&
-        @blend &&
-        !(@center_x == (@image ? (@image.width / 2) : 0)) &&
-        !(@center_y == (@image ? (@image.height / 2) : 0))
+      @angle != 0 ||
+        @scale_x != 1.0 ||
+        @scale_y != 1.0 ||
+        (@alpha && @alpha != 255) ||
+        @blend ||
+        @center_x != (@image ? @image.width / 2 : 0) ||
+        @center_y != (@image ? @image.height / 2 : 0)
     end
 
     def draw
