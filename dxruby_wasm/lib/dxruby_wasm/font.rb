@@ -89,6 +89,12 @@ module DXRubyWasm
       @internal_name
     end
 
+    def get_width(text)
+      ctx = Window._root_canvas.getContext("2d")
+      ctx[:font] = self.to_css_font_string
+      ctx.measureText(text)[:width].to_i
+    end
+
     def to_css_font_string
       [@style_weight_str, "#{@size}px #{@internal_name}"].join(" ")
     end
