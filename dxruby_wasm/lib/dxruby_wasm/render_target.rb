@@ -22,6 +22,8 @@ module DXRubyWasm
       end
     end
 
+    attr_reader :width, :height, :bgcolor
+
     def initialize(width, height, bgcolor = C_DEFAULT)
       @width = width
       @height = height
