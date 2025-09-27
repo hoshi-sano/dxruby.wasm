@@ -24,6 +24,8 @@ module DXRubyWasm
       enqueue_draw(z, :font, x, y, text, font, options)
     end
 
+    alias draw_font_ex draw_font
+
     def draw_pixel(x, y, color, z = 0)
       # TODO:
       raise
