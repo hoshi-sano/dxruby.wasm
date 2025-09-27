@@ -59,6 +59,19 @@ module DXRubyWasm
             dx * dx + dy * dy
           end
 
+          def calculate_aabb(poss)
+            return [0, 0, 0, 0] if poss.empty?
+            min_x, min_y = poss[0]
+            max_x, max_y = poss[0]
+            poss.each do |x, y|
+              min_x = x if x < min_x
+              min_y = y if y < min_y
+              max_x = x if x > max_x
+              max_y = y if y > max_y
+            end
+            [min_x, min_y, max_x, max_y]
+          end
+
           def transformed(poss)
             origin_x = @sprite.absolute_x
             origin_y = @sprite.absolute_y
@@ -124,6 +137,11 @@ module DXRubyWasm
 
           def absolute_pos
             transformed([[@x, @y]]).first
+          end
+
+          def aabb
+            x, y = absolute_pos
+            [x, y, x, y]
           end
 
           # Point-in-polygon collision detection using the Ray Casting
@@ -244,6 +262,15 @@ module DXRubyWasm
             dist_sq <= radius_sum * radius_sum
           end
 
+          def aabb
+            if ellipse?
+              calculate_aabb(transformed_circle)
+            else
+              cx, cy = absolute_pos
+              [cx - @r, cy - @r, cx + @r, cy + @r]
+            end
+          end
+
           # Approximate the circle as a polygon
           def transformed_circle(segments = 16)
             angle_step = 2 * Math::PI / segments
@@ -275,6 +302,10 @@ module DXRubyWasm
           def absolute_poss
             transformed([[@x1, @y1], [@x2, @y1], [@x2, @y2], [@x1, @y2]])
           end
+
+          def aabb
+            calculate_aabb(absolute_poss)
+          end
         end
 
         class Triangle < Base
@@ -296,22 +327,38 @@ module DXRubyWasm
           def absolute_poss
             transformed(@poss)
           end
+
+          def aabb
+            calculate_aabb(absolute_poss)
+          end
         end
       end
 
       module ClassMethods
         def check(o_sprites, d_sprites, shot = :shot, hit = :hit)
           res = false
-          o_sprites = Array(o_sprites).select { |s| s.is_a?(Sprite) }
-          d_sprites = Array(d_sprites).select { |s| s.is_a?(Sprite) }
+          o_sprites = Array(o_sprites).select { |s| s.is_a?(Sprite) && s.collidable? }
+          d_sprites = Array(d_sprites).select { |s| s.is_a?(Sprite) && s.collidable? }
+
+          return false if o_sprites.empty? || d_sprites.empty?
+
+          # NOTE: The cell size for the spatial grid is fixed at 64.
+          # This may not be optimal for all sprite sizes and could be a subject
+          # for future performance tuning.
+          cell_size = 64
+          grid = SpaceGrid.new(cell_size, cell_size)
+          (o_sprites + d_sprites).each { |s| grid.add(s) }
+
           discards = []
+
           o_sprites.each do |o_sprite|
             next if discards.include?(o_sprite)
 
-            d_sprites.each do |d_sprite|
-              break if discards.include?(o_sprite)
+            candidates = grid.get_candidates(o_sprite)
+            target_sprites = candidates & d_sprites
+
+            target_sprites.each do |d_sprite|
               next if discards.include?(d_sprite)
-              next if o_sprite.object_id == d_sprite.object_id
 
               if o_sprite === d_sprite
                 res = true
@@ -325,6 +372,7 @@ module DXRubyWasm
                 if discard
                   discards << o_sprite
                   discards << d_sprite
+                  break
                 end
               end
             end
@@ -373,7 +421,21 @@ module DXRubyWasm
 
       def collide?(sprite)
         return false if !collidable? || !sprite.collidable?
+
+        # Broad phase: AABB collision check
+        return false unless aabb_collide?(@hitbox.aabb, sprite.hitbox.aabb)
+
+        # Narrow phase: Detailed collision check
         @hitbox.collide?(sprite.hitbox)
+      end
+
+      def aabb_collide?(box1, box2)
+        # box = [min_x, min_y, max_x, max_y]
+        # Returns true if they overlap, false otherwise.
+        !(box1[2] < box2[0] || # box1_max_x < box2_min_x
+          box1[0] > box2[2] || # box1_min_x > box2_max_x
+          box1[3] < box2[1] || # box1_max_y < box2_min_y
+          box1[1] > box2[3])   # box1_min_y > box2_max_y
       end
     end
   end
