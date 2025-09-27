@@ -11,10 +11,12 @@ module DXRubyWasm
     end
 
     def draw(x, y, image, z = 0)
+      image._render_pos(x, y) if image.is_a?(RenderTarget)
       enqueue_draw(z, :image, x, y, image)
     end
 
     def draw_ex(x, y, image, options = {})
+      image._render_pos(x, y) if image.is_a?(RenderTarget)
       z = options[:z] || 0
       enqueue_draw(z, :draw_ex, x, y, image, options)
     end

@@ -22,7 +22,7 @@ module DXRubyWasm
       end
     end
 
-    attr_reader :width, :height, :bgcolor
+    attr_reader :width, :height, :bgcolor, :x, :y
 
     def initialize(width, height, bgcolor = C_DEFAULT)
       @width = width
@@ -30,6 +30,8 @@ module DXRubyWasm
       @bgcolor = bgcolor
       @image = Image.new(@width, @height)
       @draw_queue = []
+      @x = 0
+      @y = 0
       self.class._push_instance(self)
     end
 
@@ -49,6 +51,11 @@ module DXRubyWasm
 
     def _force_discard
       @draw_queue = []
+    end
+
+    def _render_pos(x, y)
+      @x = x
+      @y = y
     end
   end
 end
