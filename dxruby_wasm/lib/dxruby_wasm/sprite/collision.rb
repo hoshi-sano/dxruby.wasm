@@ -3,207 +3,114 @@
 module DXRubyWasm
   class Sprite
     module Collision
-      CHECK_FUNCTIONS_JS = <<~JS
-        window.DXRubyWasmCollision ||= {};
-        Object.assign(window.DXRubyWasmCollision, {
-          aabb_collide: (box1, box2) => {
-            // box = [min_x, min_y, max_x, max_y]
-            return !(box1[2] < box2[0] ||
-                     box1[0] > box2[2] ||
-                     box1[3] < box2[1] ||
-                     box1[1] > box2[3]);
-          },
-
-          vector_subtract: (a, b) => {
-            return [a[0] - b[0], a[1] - b[1]];
-          },
-
-          vector_dot_product: (a, b) => {
-            return a[0] * b[0] + a[1] * b[1];
-          },
-
-          normalize: (a, b) => {
-            const len = Math.sqrt(a*a + b*b);
-            if (len === 0) return [0, 0];
-            return [a / len, b / len];
-          },
-
-          project_polygon: (polygon, axis) => {
-            let min = window.DXRubyWasmCollision.vector_dot_product(polygon[0], axis);
-            let max = min;
-            for (let i = 1; i < polygon.length; i++) {
-              const projection = window.DXRubyWasmCollision.vector_dot_product(polygon[i], axis);
-              if (projection < min) {
-                min = projection;
-              }
-              if (projection > max) {
-                max = projection;
-              }
-            }
-            return [min, max];
-          },
-
-          overlap: (proj1, proj2) => {
-            return !(proj1[1] < proj2[0] || proj2[1] < proj1[0]);
-          },
-
-          polygons_collide: (poly1, poly2) => {
-            const polygons = [poly1, poly2];
-            for (let i = 0; i < polygons.length; i++) {
-              const polygon = polygons[i];
-              for (let j = 0; j < polygon.length; j++) {
-                const current_p = polygon[j];
-                const next_p = polygon[(j + 1) % polygon.length];
-
-                const edge = window.DXRubyWasmCollision.vector_subtract(next_p, current_p);
-                const axis = window.DXRubyWasmCollision.normalize(-edge[1], edge[0]);
-
-                const proj1 = window.DXRubyWasmCollision.project_polygon(poly1, axis);
-                const proj2 = window.DXRubyWasmCollision.project_polygon(poly2, axis);
-
-                if (!window.DXRubyWasmCollision.overlap(proj1, proj2)) {
-                  return false;
-                }
-              }
-            }
-            return true;
-          },
-
-          project_circle: (center, radius, axis) => {
-            const center_proj = window.DXRubyWasmCollision.vector_dot_product(center, axis);
-            return [center_proj - radius, center_proj + radius];
-          },
-
-          polygon_circle_collide: (polygon, circle_center, radius) => {
-            // 1: Polygon edge normals
-            for (let i = 0; i < polygon.length; i++) {
-              const current_p = polygon[i];
-              const next_p = polygon[(i + 1) % polygon.length];
-
-              const edge = window.DXRubyWasmCollision.vector_subtract(next_p, current_p);
-              const axis = window.DXRubyWasmCollision.normalize(-edge[1], edge[0]);
-
-              const proj_poly = window.DXRubyWasmCollision.project_polygon(polygon, axis);
-              const proj_circle = window.DXRubyWasmCollision.project_circle(circle_center, radius, axis);
-
-              if (!window.DXRubyWasmCollision.overlap(proj_poly, proj_circle)) {
-                return false;
-              }
-            }
-
-            // 2: Axis from circle center to nearest polygon vertex
-            let nearest_dist_sq = Infinity;
-            let nearest_point = null;
-            for (let i = 0; i < polygon.length; i++) {
-              const point = polygon[i];
-              const dx = point[0] - circle_center[0];
-              const dy = point[1] - circle_center[1];
-              const dist_sq = dx * dx + dy * dy;
-              if (dist_sq < nearest_dist_sq) {
-                nearest_dist_sq = dist_sq;
-                nearest_point = point;
-              }
-            }
-
-            const axis = window.DXRubyWasmCollision.normalize(
-              nearest_point[0] - circle_center[0],
-              nearest_point[1] - circle_center[1]
-            );
-            const proj_poly = window.DXRubyWasmCollision.project_polygon(polygon, axis);
-            const proj_circle = window.DXRubyWasmCollision.project_circle(circle_center, radius, axis);
-            if (!window.DXRubyWasmCollision.overlap(proj_poly, proj_circle)) {
-              return false;
-            }
-
-            return true;
-          },
-
-          calculate_aabb: (poss) => {
-            let min_x = poss[0][0];
-            let min_y = poss[0][1];
-            let max_x = poss[0][0];
-            let max_y = poss[0][1];
-            for (const [x, y] of poss) {
-              if (x < min_x) min_x = x;
-              if (y < min_y) min_y = y;
-              if (x > max_x) max_x = x;
-              if (y > max_y) max_y = y;
-            }
-            return [min_x, min_y, max_x, max_y];
-          },
-
-          transformed: (poss, origin_x, origin_y, collision_sync, cx, cy, sx, sy, angle) => {
-            if (!collision_sync) {
-              return poss.map(([x, y]) => [origin_x + x, origin_y + y]);
-            }
-
-            const rad = angle * Math.PI / 180;
-            const cos = Math.cos(rad);
-            const sin = Math.sin(rad);
-
-            return poss.map(([x, y]) => {
-              return [
-                (x - cx) * sx * cos - (y - cy) * sy * sin + cx + origin_x,
-                (x - cx) * sx * sin + (y - cy) * sy * cos + cy + origin_y,
-              ];
-            });
-          },
-
-          in_polygon: (point, polygon_poss) => {
-            const [px, py] = point;
-            let inside = false;
-
-            for (let i = 0, j = polygon_poss.length - 1; i < polygon_poss.length; j = i++) {
-              const [xi, yi] = polygon_poss[i];
-              const [xj, yj] = polygon_poss[j];
-
-              const intersect = ((yi > py) !== (yj > py)) &&
-                (px < (xj - xi) * (py - yi) / (yj - yi) + xi);
-              if (intersect) inside = !inside;
-            }
-
-            return inside;
-          },
-
-          transformed_circle: (x, y, r, segments, origin_x, origin_y, collision_sync, cx, cy, sx, sy, angle) => {
-            const angle_step = 2 * Math.PI / segments;
-            const circle_poss = [];
-            for (let i = 0; i < segments; i++) {
-              const current_rad = i * angle_step;
-              circle_poss.push([x + Math.cos(current_rad) * r, y + Math.sin(current_rad) * r]);
-            }
-            return window.DXRubyWasmCollision.transformed(circle_poss, origin_x, origin_y, collision_sync, cx, cy, sx, sy, angle);
-          },
-        });
-      JS
-      JS.eval(CHECK_FUNCTIONS_JS)
-      private_constant :CHECK_FUNCTIONS_JS
-
       module HitBox
         class Base
-          def _js_runner
-            Sprite._js_runner
-          end
-
           # SAT-based collision detection: polygon vs polygon
           def polygons_collide?(poly1, poly2)
-            _js_runner.polygons_collide?(poly1, poly2)
+            [poly1, poly2].each do |polygon|
+              polygon.each_with_index do |current_p, idx|
+                next_p = polygon[(idx + 1) % polygon.size]
+
+                edge = vector_subtract(next_p, current_p)
+                axis = normalize(-edge[1], edge[0])
+
+                proj1 = project_polygon(poly1, axis)
+                proj2 = project_polygon(poly2, axis)
+
+                return false unless overlap?(proj1, proj2)
+              end
+            end
+            true
+          end
+
+          # Projects a polygon onto an axis and
+          # returns the min and max scalar values
+          def project_polygon(polygon, axis)
+            min = max = vector_dot_product(polygon[0], axis)
+            polygon.each do |point|
+              projection = vector_dot_product(point, axis)
+              min = [min, projection].min
+              max = [max, projection].max
+            end
+            [min, max]
+          end
+
+          def vector_dot_product(a, b)
+            a[0] * b[0] + a[1] * b[1]
+          end
+
+          def vector_subtract(a, b)
+            [a[0] - b[0], a[1] - b[1]]
+          end
+
+          def normalize(a, b)
+            len = Math.sqrt(a**2 + b**2)
+            return [0, 0] if len == 0
+            [a / len, b / len]
+          end
+
+          # Returns true if two projection intervals overlap
+          def overlap?(proj1, proj2)
+            !(proj1[1] < proj2[0] || proj2[1] < proj1[0])
           end
 
           def distance_squared(a, b)
-            dx, dy = _js_runner.vector_subtract(a, b).to_a.map(&:to_i)
+            dx, dy = vector_subtract(a, b)
             dx * dx + dy * dy
           end
 
           def calculate_aabb(poss)
             return [0, 0, 0, 0] if poss.empty?
-            _js_runner.calculate_aabb(poss).to_a.map(&:to_i)
+            min_x, min_y = poss[0]
+            max_x, max_y = poss[0]
+            poss.each do |x, y|
+              min_x = x if x < min_x
+              min_y = y if y < min_y
+              max_x = x if x > max_x
+              max_y = y if y > max_y
+            end
+            [min_x, min_y, max_x, max_y]
           end
 
           def transformed(poss)
-            _js_runner.transformed(poss, @sprite.absolute_x, @sprite.absolute_y,
-                                   @sprite.collision_sync, @sprite.center_x, @sprite.center_y,
-                                   @sprite.scale_x, @sprite.scale_y, @sprite.angle).to_a.map { |p| p.to_a.map(&:to_i) }
+            origin_x = @sprite.absolute_x
+            origin_y = @sprite.absolute_y
+
+            unless @sprite.collision_sync
+              return poss.map { |(x, y)|  [origin_x + x, origin_y + y] }
+            end
+
+            cx = @sprite.center_x
+            cy = @sprite.center_y
+            sx = @sprite.scale_x
+            sy = @sprite.scale_y
+            rad = @sprite.angle * Math::PI / 180.0
+            cos = Math.cos(rad)
+            sin = Math.sin(rad)
+
+            poss.map do |(x, y)|
+              # # Translate to origin relative to the center
+              # dx = x - cx
+              # dy = y - cy
+              #
+              # # Apply scaling
+              # dx *= sx
+              # dy *= sy
+              #
+              # # Apply rotation
+              # rotated_x = dx * cos - dy * sin
+              # rotated_y = dx * sin + dy * cos
+              #
+              # # Translate back from center and apply @sprite's position
+              # [rotated_x + cx + origin_x, rotated_y + cy + origin_y]
+              #
+              #
+              # The above operations are combined in the following:
+              [
+                (x - cx) * sx * cos - (y - cy) * sy * sin + cx + origin_x,
+                (x - cx) * sx * sin + (y - cy) * sy * cos + cy + origin_y,
+              ]
+            end
           end
         end
 
@@ -240,7 +147,30 @@ module DXRubyWasm
           # Point-in-polygon collision detection using the Ray Casting
           def in_polygon?(polygon_poss)
             px, py = absolute_pos
-            _js_runner.in_polygon?([px, py], polygon_poss)
+            inside = false
+
+            prev_index = polygon_poss.length - 1
+            polygon_poss.each_with_index do |current_pos, current_index|
+              # Consider the edge (line segment) formed by
+              # `(current_x, current_y)` and `(prev_x, prev_y)`
+              current_x, current_y = current_pos
+              prev_x, prev_y = polygon_poss[prev_index]
+
+              # Check if the edge crosses the `py`
+              if (current_y > py) != (prev_y > py)
+                intersect_x = current_x +
+                              (prev_x - current_x) *
+                              (py - current_y) / (prev_y - current_y + 1e-10)
+                if px < intersect_x
+                  # If the point crosses an odd number of edges, it's inside the polygon
+                  inside = !inside
+                end
+              end
+
+              prev_index = current_index
+            end
+
+            inside
           end
 
           def in_circle?(circle_center, radius)
@@ -288,9 +218,42 @@ module DXRubyWasm
             end
           end
 
+          def project_circle(center, radius, axis)
+            center_proj = vector_dot_product(center, axis)
+            [center_proj - radius, center_proj + radius]
+          end
+
           # SAT-based collision detection: polygon vs circle
+          #
+          # Detects collision if projections overlap on all axes:
+          # 1: Polygon edge normals
+          # 2: Axis from circle center to nearest polygon vertex
           def polygon_circle_collide?(polygon, circle_center, radius)
-            _js_runner.polygon_circle_collide?(polygon, circle_center, radius)
+            # 1:
+            polygon.each_with_index do |current_p, idx|
+              next_p = polygon[(idx + 1) % polygon.size]
+
+              edge = vector_subtract(next_p, current_p)
+              axis = normalize(-edge[1], edge[0])
+
+              proj_poly = project_polygon(polygon, axis)
+              proj_circle = project_circle(circle_center, radius, axis)
+
+              return false unless overlap?(proj_poly, proj_circle)
+            end
+
+            # 2:
+            nearest_point = polygon.min_by do |point|
+              dx = point[0] - circle_center[0]
+              dy = point[1] - circle_center[1]
+              dx * dx + dy * dy
+            end
+            axis = normalize(*vector_subtract(nearest_point, circle_center))
+            proj_poly = project_polygon(polygon, axis)
+            proj_circle = project_circle(circle_center, radius, axis)
+            return false unless overlap?(proj_poly, proj_circle)
+
+            true # projections overlap on all axes
           end
 
           def circles_collide?(center1, radius1, center2, radius2)
@@ -310,9 +273,14 @@ module DXRubyWasm
 
           # Approximate the circle as a polygon
           def transformed_circle(segments = 16)
-            _js_runner.transformed_circle(@x, @y, @r, segments, @sprite.absolute_x, @sprite.absolute_y,
-                                          @sprite.collision_sync, @sprite.center_x, @sprite.center_y,
-                                          @sprite.scale_x, @sprite.scale_y, @sprite.angle).to_a.map { |p| p.to_a.map(&:to_i) }
+            angle_step = 2 * Math::PI / segments
+            circle_poss = []
+            segments.times do |i|
+              rad = i * angle_step
+              circle_poss << [@x + Math.cos(rad) * r, @y + Math.sin(rad) * r]
+            end
+
+            transformed(circle_poss)
           end
         end
 
@@ -367,10 +335,6 @@ module DXRubyWasm
       end
 
       module ClassMethods
-        def _js_runner
-          @runner ||= JS.global[:window][:DXRubyWasmCollision]
-        end
-
         def check(o_sprites, d_sprites, shot = :shot, hit = :hit)
           res = false
           o_sprites = Array(o_sprites).select { |s| s.is_a?(Sprite) && s.collidable? }
@@ -465,12 +429,13 @@ module DXRubyWasm
         @hitbox.collide?(sprite.hitbox)
       end
 
-      def _js_runner
-        self.class._js_runner
-      end
-
       def aabb_collide?(box1, box2)
-        _js_runner.aabb_collide?(box1, box2)
+        # box = [min_x, min_y, max_x, max_y]
+        # Returns true if they overlap, false otherwise.
+        !(box1[2] < box2[0] || # box1_max_x < box2_min_x
+          box1[0] > box2[2] || # box1_min_x > box2_max_x
+          box1[3] < box2[1] || # box1_max_y < box2_min_y
+          box1[1] > box2[3])   # box1_min_y > box2_max_y
       end
     end
   end
